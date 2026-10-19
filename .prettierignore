@@ -1,0 +1,11 @@
+# Generated files — owned by their generator, not prettier.
+packages/ehr-data-service/src/tools/tools.generated.ts
+
+# Build output + deps
+**/dist/
+**/.next/
+**/node_modules/
+
+# Other generated artifacts (do not reformat)
+apps/admin-ui/src/lib/sdk/generated/
+packages/bridge-client/src/generated/

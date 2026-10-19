@@ -1,0 +1,22 @@
+# Pre-commit hooks for Health Services
+# Runs: secrets scan, no console.log, no any at boundaries, lint-staged (type check)
+
+echo "Running pre-commit checks..."
+
+# 1. Secrets scan (HARD BLOCK)
+echo "  [1/4] Checking for secrets..."
+bash scripts/check-secrets.sh || exit 1
+
+# 2. No console.log in production code (HARD BLOCK)
+echo "  [2/4] Checking for console.log..."
+bash scripts/check-no-console.sh || exit 1
+
+# 3. No `any` at interface boundaries (WARNING only)
+echo "  [3/4] Checking for new 'any' types..."
+bash scripts/check-no-any.sh
+
+# 4. Type check on staged files (HARD BLOCK)
+echo "  [4/4] Running type check..."
+npx lint-staged || exit 1
+
+echo "Pre-commit checks passed."

@@ -1,0 +1,115 @@
+# Project Overview: Health Services Multi-Application Platform
+
+## 1. Vision & Executive Summary
+Health Services is an enterprise-grade healthcare interoperability and intelligence platform. It acts as a unified gateway between fragmented Electronic Health Record (EHR) systems and modern, AI-driven clinical applications. 
+
+By abstracting the complexities of different EHR vendors (Epic, Cerner, Athena, etc.) into a single FHIR R4-compliant API, Health Services enables developers to build clinical tools that work across the entire healthcare ecosystem without vendor-specific code.
+
+## 2. The Problem
+The healthcare technology landscape suffers from three critical bottlenecks:
+*   **EHR Fragmentation:** Each major hospital system uses different EHR vendors, each with its own proprietary APIs, data formats, and authentication quirks.
+*   **Integration Complexity:** Implementing a "SMART on FHIR" launch or maintaining 10+ different vendor adapters is a massive engineering burden for digital health startups.
+*   **Clinical Information Overload:** Clinicians are overwhelmed with raw data but lack actionable, intelligent insights at the point of care, leading to burnout and suboptimal patient outcomes.
+
+## 3. The Solution: Health Services
+Health Services solves these problems through a multi-layered platform:
+
+### A. The Bridge (Integration Gateway)
+A high-performance FHIR R4 proxy that handles:
+*   **Vendor Abstraction:** One API to talk to Epic, Cerner, Athena, NextGen, and more.
+*   **SMART on FHIR Orchestration:** Managed OAuth flows and token management.
+*   **Intelligent Caching:** Multi-tier caching to reduce EHR load and improve app performance.
+
+### B. The Intelligence Layer (CDS App)
+An AI-powered Clinical Decision Support (CDS) application that:
+*   **Autonomous Analysis:** Uses LLM agents (LangChain) to "read" patient charts via the Bridge.
+*   **Actionable Insights:** Generates "CDS Cards" for PCP suggestions, drug-drug interactions, and preventive care gaps.
+*   **SMART Integration:** Launches directly inside the EHR workflow.
+
+### C. The Control Plane (Admin Suite)
+A management interface for healthcare organizations to:
+*   Provision applications and manage API access.
+*   Configure EHR connections and credentials.
+*   Set organizational-level AI rules for clinical analysis.
+
+## 4. Business Value Proposition
+*   **Reduced Time-to-Market:** Apps can integrate once and deploy to any hospital.
+*   **Operational Efficiency:** Automated clinical reviews reduce manual chart-digging time for clinicians.
+*   **Improved Patient Outcomes:** Real-time alerts for safety risks and care gaps ensure no patient "falls through the cracks."
+*   **Security & Compliance:** Centralized audit logs and HIPAA-compliant data handling.
+
+## 5. The Cutting-Edge Tech Stack
+
+### High-Performance Core
+*   **Agentic AI Engine:** LangChain.js orchestrating autonomous clinical agents (Anthropic Claude 3.5 Sonnet / OpenAI GPT-4o).
+*   **Real-Time Streaming:** Server-Sent Events (SSE) for sub-second AI reasoning feedback loops.
+*   **High-Concurrency Gateway:** NestJS + Fastify core capable of handling high-volume FHIR throughput.
+*   **Persistence & State:** PostgreSQL (Aiven) for relational config + Valkey (High-performance Redis fork) for sub-millisecond session state.
+
+### Modern DevOps & DX
+*   **Architecture-as-Code:** Graphify-driven architectural audits that prevent technical debt in real-time.
+*   **Distributed Observability:** OpenTelemetry (OTEL) with automatic instrumentation across the monorepo for deep-trace analysis.
+*   **Infrastructure-as-Code:** TurboRepo-optimized builds with Dockerized micro-application isolation.
+
+## 6. Zero-Trust Security & Data Sovereignty
+
+### A. Defensive Security-by-Design
+*   **Cryptographic Multi-Tenancy:** Strict logical isolation per organization, ensuring no data bleed between hospital systems.
+*   **Identity Sovereignty:** OAuth 2.0 + OIDC with PKCE (Proof Key for Code Exchange) and RS384 asymmetric signing.
+*   **Stateless PHI Handling:** The Bridge API operates as a stateless proxy; clinical data is cached in transient, encrypted Redis sessions with sliding TTLs, never touching persistent disks in the gateway.
+
+### B. Clinical Compliance Guardrails
+*   **Automated PHI Scrubbing:** Built-in middleware that programmatically prevents PII/PHI from leaking into Bunyan structured logs or Sentry error reports.
+*   **Architecture Enforcement:** Knowledge Graph (Graphify) rules that fail CI/CD if a developer attempts to bypass security layers or cross package boundaries.
+*   **Audit-Ready Traceability:** Every EHR interaction is automatically tagged with a global trace ID, linking the user, the app, and the clinical resource for total forensic visibility.
+
+## 7. Clinical Governance & AI Safety
+
+### A. Hallucination Mitigation & Verification
+*   **Evidence-Based Traceability:** Every clinical suggestion generated by the AI includes a "provenance" link back to the original FHIR resource (e.g., a specific Lab Result ID or Medication MRN).
+*   **Verification Chains:** The platform employs a "Critic Agent" pattern, where a second LLM pass verifies the clinical logic of the primary agent before delivery.
+*   **Human-in-the-Loop (HITL):** Designed to augment, not replace; all "Actions" (like updating a care plan) require explicit practitioner signature.
+
+### B. Dynamic Rule Engine
+*   **Organizational Sovereignty:** Hospital admins can enable/disable specific AI specialist agents (e.g., "Medication Review") via the Control Plane.
+*   **Priority Orchestration:** Rules are evaluated based on clinical severity, ensuring critical safety alerts (Allergies) always take precedence over care gaps (Screening).
+
+## 8. Ecosystem Standards & Integration
+
+*   **SMART on FHIR:** Deep integration with EHR sidebars and dashboards using standard launch protocols.
+*   **CDS Hooks Support:** The platform is engineered to respond to EHR "hooks" (e.g., `patient-view`, `order-select`), providing real-time intelligence at the exact moment of clinical decision-making.
+*   **FHIR R4 Normalization:** Strict adherence to the HL7 FHIR R4 specification, ensuring the "Bridge" output is compatible with any modern health app.
+
+## 9. Modern Developer Experience (DX)
+
+*   **Local-First Development:** Full support for **Ollama**, allowing developers to run LLM agents locally without cloud costs or latency.
+*   **Unified SDK:** A single, typed client (`@hs/bridge-client`) that provides a consistent interface for all 10+ EHR vendors.
+*   **Schema-Driven Development:** Automatic TypeScript type generation from FHIR schemas and OpenAPI specs, ensuring end-to-end type safety.
+
+## 10. Future-Proof Scalability
+
+*   **Cloud Agnostic:** Containerized services ready for AWS, Azure, or private cloud deployment (essential for health-system requirements).
+*   **Multi-Region Strategy:** Designed for low-latency FHIR proxying by deploying "Bridge" instances geographically close to hospital data centers.
+*   **Modular Extensibility:** Adding a new EHR vendor or a new AI specialist agent requires zero changes to the core platform architecture.
+
+## 11. Directory Structure Overview
+```text
+apps/
+  ├── bridge-api/      # The FHIR R4 Integration Gateway
+  ├── cds-app/         # AI-powered Clinical Decision Support service
+  ├── admin-api/       # Identity & Configuration Management
+  ├── admin-ui/        # Management Dashboard (Next.js)
+  └── cds-ui/          # Clinical Insight Dashboard (Next.js)
+
+packages/
+  ├── ehr-data-service/ # 10+ Vendor-specific EHR adapters
+  ├── cds-engine/       # Pure AI/LangChain clinical logic (zero infra dependencies)
+  ├── db/               # Shared Prisma schema and database clients
+  └── core/             # Shared domain types, errors, and constants
+```
+
+## 8. Knowledge Management
+This project uses **Graphify**, an AI-powered knowledge graph tool, to maintain architectural integrity. 
+*   **Source of Truth:** `graphify-out/GRAPH_REPORT.md` provides a live map of all service dependencies and architectural patterns.
+*   **Visualization:** The knowledge graph can be explored visually in Obsidian via the `graphify-out/obsidian` vault.
+

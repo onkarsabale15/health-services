@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-surface text-surface-on font-sans antialiased;
+  }
+}
+
+@layer components {
+  /* ── Cards ─────────────────────────────────────────── */
+  .cds-card {
+    @apply bg-white rounded-xl border border-surface-container-high/40;
+    box-shadow: 0 1px 3px rgba(0, 52, 94, 0.04), 0 4px 16px rgba(0, 52, 94, 0.03);
+  }
+  .cds-card-elevated {
+    @apply bg-white rounded-xl;
+    box-shadow: 0 2px 8px rgba(0, 52, 94, 0.06), 0 8px 32px rgba(0, 52, 94, 0.04);
+  }
+
+  /* ── Section Header ────────────────────────────────── */
+  .cds-section-header {
+    @apply flex items-center gap-2 mb-4;
+  }
+  .cds-section-header .icon {
+    @apply text-primary;
+    font-size: 20px;
+  }
+  .cds-section-header h3 {
+    @apply text-xs uppercase tracking-widest font-bold text-secondary;
+  }
+
+  /* ── Buttons ───────────────────────────────────────── */
+  .btn-primary {
+    @apply text-white font-semibold px-6 py-3 rounded-xl transition-all hover:shadow-lg active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+    background: linear-gradient(135deg, #2b5bb5 0%, #1a4ea8 100%);
+  }
+  .btn-secondary {
+    @apply bg-surface-container text-surface-on-variant font-medium px-4 py-2 rounded-lg hover:bg-surface-container-high transition-colors;
+  }
+  .btn-ghost {
+    @apply text-primary font-semibold text-xs hover:underline;
+  }
+
+  /* ── Badges ────────────────────────────────────────── */
+  .badge {
+    @apply text-[10px] uppercase tracking-widest font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1;
+  }
+  .badge-critical { @apply bg-red-50 text-red-600 border border-red-200; }
+  .badge-warning { @apply bg-amber-50 text-amber-600 border border-amber-200; }
+  .badge-info { @apply bg-blue-50 text-blue-600 border border-blue-200; }
+  .badge-active { @apply bg-emerald-50 text-emerald-600 border border-emerald-200; }
+  .badge-draft { @apply bg-gray-50 text-gray-500 border border-gray-200; }
+  .badge-completed { @apply bg-blue-50 text-blue-600 border border-blue-200; }
+  .badge-severe { @apply bg-red-50 text-red-600 border border-red-200; }
+  .badge-moderate { @apply bg-orange-50 text-orange-600 border border-orange-200; }
+  .badge-mild { @apply bg-yellow-50 text-yellow-600 border border-yellow-200; }
+
+  /* ── Vital Tile ────────────────────────────────────── */
+  .vital-tile {
+    @apply bg-surface-container-low/60 rounded-lg px-3.5 py-3;
+  }
+  .vital-tile .vital-label {
+    @apply text-[10px] uppercase tracking-widest font-semibold text-secondary mb-0.5;
+  }
+  .vital-tile .vital-value {
+    @apply text-xl font-bold leading-tight text-surface-on;
+  }
+  .vital-tile .vital-value.abnormal {
+    @apply text-red-600;
+  }
+  .vital-tile .vital-unit {
+    @apply text-xs font-normal text-secondary ml-0.5;
+  }
+
+  /* ── Material Icons ────────────────────────────────── */
+  .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+  }
+
+  /* ── Tab Bar ───────────────────────────────────────── */
+  .cds-tab-bar {
+    @apply flex gap-1 bg-surface-container-low rounded-xl p-1;
+  }
+  .cds-tab {
+    @apply flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all text-secondary hover:text-surface-on;
+  }
+  .cds-tab.active {
+    @apply bg-white text-surface-on font-semibold;
+    box-shadow: 0 1px 4px rgba(0, 52, 94, 0.08);
+  }
+}

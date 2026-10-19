@@ -1,0 +1,9 @@
+# Knowledge Base Changelog
+
+| Date | Change |
+|------|--------|
+| 2026-04-21 | Incremental: package consolidation (16→7) — infra singletons merged into `@hs/infra` + `@hs/observability`, new `@hs/bootstrap` for standard NestJS startup; `@hs/core` absorbed into `@hs/ehr-data-service/core`; `@hs/admin-sdk` killed (admin-ui generates inline at `src/lib/sdk/generated/`); `@hs/bridge-sdk` renamed to `@hs/bridge-client`; workflow-app pivoted to direct raw EHR integration via `ehrFactory` (no longer via bridge-api); AthenaNet logic consolidated; Cerner updateCondition added; added Non-FHIR EHR Integration Strategy + Workflow Raw EHR patterns |
+| 2026-04-11 | Incremental: added terminology-sync app + bridge terminology endpoints (search/lookup); added IcdSnomedMapping model + MapCategory enum; added MedicationRequest FHIR resource + Condition update support; added cds-ui frontend (ConditionForm, TerminologySearchField, useClinicalSearch, useTerminologySearch hooks); added clinical-write PUT conditions endpoint; added patterns: terminology provider DI, ConditionBodyBuilder, FhirCodingEnricher, PlatformTokenService; removed mixin-based mapper classes; added cache.getOrSet(), http-client requestWithRetry, tracing withSpan; added SNOMED/ICD-10 code systems to compliance-map |
+| 2026-04-02 | Incremental: added EhrSiteConfig model + site mgmt endpoints + unified lookups to api-reference; added internal service auth, site approval workflow, JWE launch token patterns; updated SMART paths with :ehrName; added cross-service communication to overview; updated frontend-map with multi-site UI, pending sites banner, CDS tab |
+| 2026-03-24 | Incremental: added 6 workflow execution + internal token endpoints to api-reference.md; fixed CoreEhrConnection model (IS in Prisma, full field list); corrected model count 13→12 in index.md |
+| 2026-03-24 | Initial KB generation: 7 apps, 16 packages, 12 Prisma models, 14 FHIR resources, 10 EHR vendors |

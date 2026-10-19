@@ -1,0 +1,31 @@
+{
+  "name": "@hs/workflow-ui",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "start": "next start -p 3005",
+    "clean": "rm -rf .next",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "dependencies": {
+    "@hs/bridge-client": "*",
+    "@hs/config": "*",
+    "@hs/observability": "*",
+    "@hs/observability-web": "*",
+    "@xyflow/react": "^12.0.0",
+    "next": "^16.2.11",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.7.0"
+  }
+}

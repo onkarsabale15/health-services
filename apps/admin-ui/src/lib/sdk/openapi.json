@@ -1,0 +1,5858 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/admin/auth/signup": {
+      "post": {
+        "operationId": "AuthController_signUp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignUpDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignUpResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already registered"
+          }
+        },
+        "summary": "Register a new user and optionally join existing org",
+        "tags": [
+          "Admin Auth"
+        ]
+      }
+    },
+    "/api/admin/auth/signin": {
+      "post": {
+        "operationId": "AuthController_signIn",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignInDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session token returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignInResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        },
+        "summary": "Sign in with email and password",
+        "tags": [
+          "Admin Auth"
+        ]
+      }
+    },
+    "/api/admin/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refresh",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "New access and refresh tokens",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired refresh token"
+          }
+        },
+        "summary": "DEPRECATED — Use POST /oauth/token with grant_type=refresh_token instead",
+        "tags": [
+          "Admin Auth"
+        ]
+      }
+    },
+    "/api/admin/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Logged out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Logout and revoke refresh token",
+        "tags": [
+          "Admin Auth"
+        ]
+      }
+    },
+    "/api/admin/auth/sso-code": {
+      "post": {
+        "operationId": "AuthController_createSsoCode",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "SSO code issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SsoCodeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Generate a short-lived SSO code for cross-app authentication",
+        "tags": [
+          "Admin Auth"
+        ]
+      }
+    },
+    "/.well-known/openid-configuration": {
+      "get": {
+        "operationId": "OAuthController_getOpenIdConfig",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {}
+        ],
+        "summary": "OpenID Connect Discovery",
+        "tags": [
+          "OAuth 2.0"
+        ]
+      }
+    },
+    "/.well-known/smart-configuration": {
+      "get": {
+        "operationId": "OAuthController_getSmartConfig",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {}
+        ],
+        "summary": "SMART on FHIR Configuration",
+        "tags": [
+          "OAuth 2.0"
+        ]
+      }
+    },
+    "/.well-known/jwks.json": {
+      "get": {
+        "operationId": "OAuthController_getJwks",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {}
+        ],
+        "summary": "JSON Web Key Set (public keys)",
+        "tags": [
+          "OAuth 2.0"
+        ]
+      }
+    },
+    "/oauth/authorize": {
+      "get": {
+        "operationId": "OAuthController_authorize",
+        "parameters": [
+          {
+            "name": "response_type",
+            "required": true,
+            "in": "query",
+            "description": "Must be \"code\"",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "redirect_uri",
+            "required": true,
+            "in": "query",
+            "description": "Client redirect URI",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "required": true,
+            "in": "query",
+            "description": "CSRF protection state parameter",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code_challenge",
+            "required": true,
+            "in": "query",
+            "description": "PKCE code challenge (S256)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code_challenge_method",
+            "required": true,
+            "in": "query",
+            "description": "Must be \"S256\"",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nonce",
+            "required": false,
+            "in": "query",
+            "description": "OIDC nonce — echoed verbatim in id_token (OIDC Core §3.1.2.1)",
+            "schema": {}
+          },
+          {
+            "name": "sso_code",
+            "required": false,
+            "in": "query",
+            "description": "Short-lived SSO code (from /admin/auth/sso-code)",
+            "schema": {}
+          },
+          {
+            "name": "app_id",
+            "required": false,
+            "in": "query",
+            "description": "Application ID (alias for client_id)",
+            "schema": {}
+          },
+          {
+            "name": "client_id",
+            "required": false,
+            "in": "query",
+            "description": "Client identifier (RFC 6749 S4.1.1)",
+            "schema": {}
+          },
+          {
+            "name": "scope",
+            "required": false,
+            "in": "query",
+            "description": "Requested scopes",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirects to redirect_uri with authorization code"
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          }
+        },
+        "security": [
+          {}
+        ],
+        "summary": "OAuth 2.0 Authorization Code with PKCE",
+        "tags": [
+          "OAuth 2.0"
+        ]
+      }
+    },
+    "/oauth/token": {
+      "post": {
+        "operationId": "OAuthController_token",
+        "parameters": [
+          {
+            "name": "authorization",
+            "required": false,
+            "in": "header",
+            "description": "HTTP Basic auth: \"Basic base64(client_id:client_secret)\". Alternative to sending client_id/client_secret in the body.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid client",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ],
+        "summary": "OAuth 2.0 Token Endpoint",
+        "tags": [
+          "OAuth 2.0"
+        ]
+      }
+    },
+    "/oauth/introspect": {
+      "post": {
+        "operationId": "OAuthController_introspect",
+        "parameters": [
+          {
+            "name": "authorization",
+            "required": false,
+            "in": "header",
+            "description": "Client authentication: \"Basic base64(client_id:client_secret)\"",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntrospectRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Introspection result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntrospectResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid client credentials"
+          }
+        },
+        "security": [
+          {}
+        ],
+        "summary": "Token Introspection (RFC 7662)",
+        "tags": [
+          "OAuth 2.0"
+        ]
+      }
+    },
+    "/oauth/revoke": {
+      "post": {
+        "operationId": "OAuthController_revoke",
+        "parameters": [
+          {
+            "name": "authorization",
+            "required": false,
+            "in": "header",
+            "description": "Client authentication: \"Basic base64(client_id:client_secret)\"",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokeRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token revoked (always 200 per RFC)"
+          }
+        },
+        "security": [
+          {}
+        ],
+        "summary": "Token Revocation (RFC 7009)",
+        "tags": [
+          "OAuth 2.0"
+        ]
+      }
+    },
+    "/oauth/userinfo": {
+      "get": {
+        "operationId": "UserInfoController_getUserInfo",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OIDC UserInfo claims"
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          },
+          "403": {
+            "description": "User account is disabled"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "OIDC UserInfo (GET) — claims for the bearer access token",
+        "tags": [
+          "OAuth 2.0"
+        ]
+      },
+      "post": {
+        "operationId": "UserInfoController_postUserInfo",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "OIDC UserInfo (POST) — claims for the bearer access token",
+        "tags": [
+          "OAuth 2.0"
+        ]
+      }
+    },
+    "/oauth/logout": {
+      "get": {
+        "operationId": "LogoutController_logoutGet",
+        "parameters": [
+          {
+            "name": "client_id",
+            "required": false,
+            "in": "query",
+            "description": "Optional override; otherwise derived from id_token aud",
+            "schema": {}
+          },
+          {
+            "name": "state",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "post_logout_redirect_uri",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "id_token_hint",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sign-out confirmation when no redirect requested"
+          },
+          "302": {
+            "description": "Redirects to post_logout_redirect_uri"
+          },
+          "400": {
+            "description": "Missing id_token_hint or invalid redirect URI"
+          }
+        },
+        "security": [
+          {}
+        ],
+        "summary": "OIDC RP-Initiated Logout (GET)",
+        "tags": [
+          "OAuth 2.0"
+        ]
+      },
+      "post": {
+        "operationId": "LogoutController_logoutPost",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {}
+        ],
+        "summary": "OIDC RP-Initiated Logout (POST)",
+        "tags": [
+          "OAuth 2.0"
+        ]
+      }
+    },
+    "/oauth/consent/context": {
+      "get": {
+        "operationId": "ConsentController_context",
+        "parameters": [
+          {
+            "name": "ticket",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Context returned"
+          },
+          "404": {
+            "description": "Ticket invalid or expired"
+          }
+        },
+        "security": [
+          {}
+        ],
+        "summary": "Fetch consent screen context (app metadata + requested scopes)",
+        "tags": [
+          "OAuth Consent"
+        ]
+      }
+    },
+    "/oauth/consent/decision": {
+      "post": {
+        "operationId": "ConsentController_decision",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentDecisionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Returns { redirect } URL the FE should navigate to"
+          }
+        },
+        "security": [
+          {}
+        ],
+        "summary": "Approve or deny consent — backend issues auth code or error redirect",
+        "tags": [
+          "OAuth Consent"
+        ]
+      }
+    },
+    "/api/organizations/me": {
+      "get": {
+        "operationId": "OrganizationController_getMyOrganization",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get current organization",
+        "tags": [
+          "Organization"
+        ]
+      },
+      "patch": {
+        "operationId": "OrganizationController_updateOrganization",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrgDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update organization (OWNER only)",
+        "tags": [
+          "Organization"
+        ]
+      }
+    },
+    "/api/users": {
+      "get": {
+        "operationId": "UserController_listUsers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedUsersDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List organization users",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/users/pending": {
+      "get": {
+        "operationId": "UserController_listPendingUsers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedUsersDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List pending users awaiting approval",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/users/{id}/approve": {
+      "patch": {
+        "operationId": "UserController_approveUser",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve a pending user",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/users/{id}/disable": {
+      "patch": {
+        "operationId": "UserController_disableUser",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Disable a user",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/users/{id}/role": {
+      "patch": {
+        "operationId": "UserController_changeRole",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change user role (OWNER only)",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/users/{userId}/apps": {
+      "get": {
+        "operationId": "UserController_listUserApps",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List apps a user has access to",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/users/{userId}/apps/{appId}": {
+      "patch": {
+        "operationId": "UserController_grantAppAccess",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAppAccessDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Grant or update user access to an app",
+        "tags": [
+          "Users"
+        ]
+      },
+      "delete": {
+        "operationId": "UserController_revokeAppAccess",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke user access to an app",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/applications": {
+      "get": {
+        "operationId": "ApplicationController_listApplications",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedApplicationsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List organization applications (filtered by user access for MEMBER role)",
+        "tags": [
+          "Applications"
+        ]
+      },
+      "post": {
+        "operationId": "ApplicationController_createApplication",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateApplicationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Application created with clientId and clientSecret",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateApplicationResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new application",
+        "tags": [
+          "Applications"
+        ]
+      }
+    },
+    "/api/applications/{id}/detail": {
+      "get": {
+        "operationId": "ApplicationController_getApplicationDetail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get application with EHR access, user access, and org users in one call",
+        "tags": [
+          "Applications"
+        ]
+      }
+    },
+    "/api/applications/{id}": {
+      "get": {
+        "operationId": "ApplicationController_getApplication",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get application details",
+        "tags": [
+          "Applications"
+        ]
+      },
+      "patch": {
+        "operationId": "ApplicationController_updateApplication",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateApplicationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update application",
+        "tags": [
+          "Applications"
+        ]
+      },
+      "delete": {
+        "operationId": "ApplicationController_deleteApplication",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Disable application",
+        "tags": [
+          "Applications"
+        ]
+      }
+    },
+    "/api/applications/{id}/rotate-secret": {
+      "post": {
+        "operationId": "ApplicationController_rotateSecret",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RotateSecretResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rotate client secret",
+        "tags": [
+          "Applications"
+        ]
+      }
+    },
+    "/api/applications/{id}/jwks": {
+      "patch": {
+        "operationId": "ApplicationController_updateJwks",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JwksUpdateResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set JWKS via public URL (for JWT assertion auth)",
+        "tags": [
+          "Applications"
+        ]
+      },
+      "delete": {
+        "operationId": "ApplicationController_removeJwks",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove JWKS configuration",
+        "tags": [
+          "Applications"
+        ]
+      }
+    },
+    "/api/applications/{id}/jwks/refresh": {
+      "post": {
+        "operationId": "ApplicationController_refreshJwks",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JwksUpdateResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Re-fetch JWKS from the stored URI",
+        "tags": [
+          "Applications"
+        ]
+      }
+    },
+    "/api/applications/{id}/enable": {
+      "post": {
+        "operationId": "ApplicationController_enableApplication",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Re-enable a disabled application",
+        "tags": [
+          "Applications"
+        ]
+      }
+    },
+    "/api/applications/{id}/access": {
+      "get": {
+        "operationId": "ApplicationController_listAppAccess",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List users with access to this application",
+        "tags": [
+          "Applications"
+        ]
+      }
+    },
+    "/api/ehr/definitions": {
+      "get": {
+        "operationId": "EhrConfigController_getDefinitions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get all EHR field definitions with resolved defaults (public, for UI rendering)",
+        "tags": [
+          "EHR Configuration"
+        ]
+      }
+    },
+    "/api/ehr/definitions/{ehrName}": {
+      "get": {
+        "operationId": "EhrConfigController_getDefinition",
+        "parameters": [
+          {
+            "name": "ehrName",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appType",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get field definitions for a specific EHR, enriched with URL defaults and scope options",
+        "tags": [
+          "EHR Configuration"
+        ]
+      }
+    },
+    "/api/ehr/scopes": {
+      "get": {
+        "operationId": "EhrConfigController_getAllPlatformScopes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get all FHIR platform scopes across all EHRs (for app-level scope selection)",
+        "tags": [
+          "EHR Configuration"
+        ]
+      }
+    },
+    "/api/ehr/definitions/{ehrName}/scopes": {
+      "get": {
+        "operationId": "EhrConfigController_getScopes",
+        "parameters": [
+          {
+            "name": "ehrName",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get available FHIR platform scopes for a specific EHR",
+        "tags": [
+          "EHR Configuration"
+        ]
+      }
+    },
+    "/api/ehr/definitions/{ehrName}/endpoints": {
+      "get": {
+        "operationId": "EhrConfigController_getEndpoints",
+        "parameters": [
+          {
+            "name": "ehrName",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appType",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get default EHR endpoint URLs for a specific appType",
+        "tags": [
+          "EHR Configuration"
+        ]
+      }
+    },
+    "/api/ehr/definitions/{ehrName}/token-scopes": {
+      "get": {
+        "operationId": "EhrConfigController_getTokenScopes",
+        "parameters": [
+          {
+            "name": "ehrName",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appType",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get EHR-specific OAuth token scope options for a specific appType",
+        "tags": [
+          "EHR Configuration"
+        ]
+      }
+    },
+    "/api/applications/{appId}/ehr": {
+      "get": {
+        "operationId": "EhrConfigController_listEhrAccess",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List EHR access entries for an application",
+        "tags": [
+          "EHR Configuration"
+        ]
+      }
+    },
+    "/api/applications/{appId}/ehr/{ehrName}": {
+      "put": {
+        "operationId": "EhrConfigController_upsertEhrAccess",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ehrName",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upsert EHR access config for an application",
+        "tags": [
+          "EHR Configuration"
+        ]
+      },
+      "delete": {
+        "operationId": "EhrConfigController_removeEhrAccess",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ehrName",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Disable EHR access for an application",
+        "tags": [
+          "EHR Configuration"
+        ]
+      }
+    },
+    "/api/applications/{appId}/ehr/{ehrName}/enable": {
+      "post": {
+        "operationId": "EhrConfigController_enableEhrAccess",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ehrName",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Re-enable EHR access for an application",
+        "tags": [
+          "EHR Configuration"
+        ]
+      }
+    },
+    "/api/applications/{appId}/ehr/{ehrName}/sites": {
+      "get": {
+        "operationId": "EhrConfigController_listSites",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ehrName",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List sites/practices for an EHR integration (session or API token)",
+        "tags": [
+          "EHR Configuration"
+        ]
+      },
+      "post": {
+        "operationId": "EhrConfigController_createSite",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ehrName",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a new site/practice to an EHR integration (session, API token, or internal key)",
+        "tags": [
+          "EHR Configuration"
+        ]
+      }
+    },
+    "/api/applications/{appId}/ehr/{ehrName}/sites/{siteId}": {
+      "put": {
+        "operationId": "EhrConfigController_updateSite",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ehrName",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "siteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a site/practice configuration (session or API token)",
+        "tags": [
+          "EHR Configuration"
+        ]
+      },
+      "delete": {
+        "operationId": "EhrConfigController_removeSite",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ehrName",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "siteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Deactivate a site/practice (session or API token)",
+        "tags": [
+          "EHR Configuration"
+        ]
+      }
+    },
+    "/api/applications/{appId}/ehr/{ehrName}/sites/{siteId}/default": {
+      "post": {
+        "operationId": "EhrConfigController_setDefaultSite",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ehrName",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "siteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set a site as the default for this integration (session or API token)",
+        "tags": [
+          "EHR Configuration"
+        ]
+      }
+    },
+    "/api/applications/{appId}/ehr/{ehrName}/jwks": {
+      "put": {
+        "operationId": "EhrConfigController_uploadJwks",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ehrName",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload JWK private key set for an EHR (stored in AWS Secrets Manager)",
+        "tags": [
+          "EHR Configuration"
+        ]
+      },
+      "delete": {
+        "operationId": "EhrConfigController_deleteJwks",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ehrName",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete JWK private key set for an EHR from Secrets Manager",
+        "tags": [
+          "EHR Configuration"
+        ]
+      }
+    },
+    "/api/applications/{appId}/ehr/{ehrName}/jwks/status": {
+      "get": {
+        "operationId": "EhrConfigController_getJwksStatus",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ehrName",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Check if JWK is configured for an EHR (does not return the key)",
+        "tags": [
+          "EHR Configuration"
+        ]
+      }
+    },
+    "/api/lookup/site": {
+      "get": {
+        "operationId": "EhrConfigController_lookupSite",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lookup site by siteId or integration + vendor identifier",
+        "tags": [
+          "EHR Configuration"
+        ]
+      }
+    },
+    "/api/lookup/application": {
+      "get": {
+        "operationId": "EhrConfigController_lookupApplication",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lookup application by id or clientId",
+        "tags": [
+          "EHR Configuration"
+        ]
+      }
+    },
+    "/api/lookup/integration": {
+      "get": {
+        "operationId": "EhrConfigController_lookupIntegration",
+        "parameters": [
+          {
+            "name": "ehrName",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lookup integration by applicationId/clientId + ehrName",
+        "tags": [
+          "EHR Configuration"
+        ]
+      }
+    },
+    "/api/applications/{appId}/sites/{siteId}/providers": {
+      "get": {
+        "operationId": "EhrConfigController_listProviders",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "siteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "List providers for a site",
+        "tags": [
+          "EHR Configuration"
+        ]
+      },
+      "post": {
+        "operationId": "EhrConfigController_createProvider",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "siteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Add a provider to a site (internal auto-create or admin manual)",
+        "tags": [
+          "EHR Configuration"
+        ]
+      }
+    },
+    "/api/applications/{appId}/sites/{siteId}/providers/{providerId}": {
+      "put": {
+        "operationId": "EhrConfigController_updateProvider",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "siteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "providerId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Approve or update a provider",
+        "tags": [
+          "EHR Configuration"
+        ]
+      },
+      "delete": {
+        "operationId": "EhrConfigController_removeProvider",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "siteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "providerId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Remove a provider (hard delete)",
+        "tags": [
+          "EHR Configuration"
+        ]
+      }
+    },
+    "/api/applications/{appId}/llm-keys/{provider}": {
+      "put": {
+        "operationId": "LlmConfigController_setKey",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetApiKeyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "API key stored"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Store a custom LLM API key for an application",
+        "tags": [
+          "LLM Configuration"
+        ]
+      },
+      "delete": {
+        "operationId": "LlmConfigController_removeKey",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a custom LLM API key for an application",
+        "tags": [
+          "LLM Configuration"
+        ]
+      }
+    },
+    "/api/applications/{appId}/llm-keys/status": {
+      "get": {
+        "operationId": "LlmConfigController_getKeyStatus",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Check which LLM providers have custom API keys configured (no values returned)",
+        "tags": [
+          "LLM Configuration"
+        ]
+      }
+    },
+    "/api/applications/{appId}/workflows": {
+      "post": {
+        "operationId": "WorkflowController_create",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkflowDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Workflow created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new workflow for an application",
+        "tags": [
+          "Workflow",
+          "Workflows"
+        ]
+      },
+      "get": {
+        "operationId": "WorkflowController_list",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedWorkflowsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List workflows for an application",
+        "tags": [
+          "Workflow",
+          "Workflows"
+        ]
+      }
+    },
+    "/api/applications/{appId}/workflows/{id}": {
+      "get": {
+        "operationId": "WorkflowController_getById",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get workflow with full definition",
+        "tags": [
+          "Workflow",
+          "Workflows"
+        ]
+      },
+      "patch": {
+        "operationId": "WorkflowController_update",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkflowDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update workflow definition",
+        "tags": [
+          "Workflow",
+          "Workflows"
+        ]
+      },
+      "delete": {
+        "operationId": "WorkflowController_delete",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Soft-delete a workflow",
+        "tags": [
+          "Workflow",
+          "Workflows"
+        ]
+      }
+    },
+    "/api/workflow-templates": {
+      "get": {
+        "operationId": "WorkflowController_listTemplates",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List available workflow templates",
+        "tags": [
+          "Workflow",
+          "Workflow Templates"
+        ]
+      }
+    },
+    "/api/workflow-templates/{id}": {
+      "get": {
+        "operationId": "WorkflowController_getTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowTemplateDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get workflow template detail",
+        "tags": [
+          "Workflow",
+          "Workflow Templates"
+        ]
+      }
+    },
+    "/api/applications/{appId}/workflows/from-template": {
+      "post": {
+        "operationId": "WorkflowController_createFromTemplate",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFromTemplateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a workflow from a template",
+        "tags": [
+          "Workflow",
+          "Workflow Templates"
+        ]
+      }
+    },
+    "/api/applications/{appId}/workflows/{workflowId}/execute": {
+      "post": {
+        "operationId": "WorkflowExecutionController_execute",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "workflowId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecuteWorkflowDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Execution queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecuteResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Trigger async workflow execution via Kafka",
+        "tags": [
+          "Workflow Execution"
+        ]
+      }
+    },
+    "/api/applications/{appId}/executions": {
+      "get": {
+        "operationId": "WorkflowExecutionController_listExecutions",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "workflowId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedExecutionsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List executions for an application",
+        "tags": [
+          "Workflow Execution"
+        ]
+      }
+    },
+    "/api/applications/{appId}/executions/{execId}": {
+      "get": {
+        "operationId": "WorkflowExecutionController_getExecution",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "execId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get execution status and output",
+        "tags": [
+          "Workflow Execution"
+        ]
+      }
+    },
+    "/api/applications/{appId}/executions/{execId}/steps": {
+      "get": {
+        "operationId": "WorkflowExecutionController_getSteps",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "execId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionStepsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get per-step results for canvas visualization",
+        "tags": [
+          "Workflow Execution"
+        ]
+      }
+    },
+    "/api/applications/{appId}/executions/{execId}/cancel": {
+      "post": {
+        "operationId": "WorkflowExecutionController_cancel",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "execId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelExecutionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a running or pending execution",
+        "tags": [
+          "Workflow Execution"
+        ]
+      }
+    },
+    "/oauth/service-token": {
+      "post": {
+        "operationId": "InternalTokenController_tokenForApp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenForAppDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token issued"
+          },
+          "401": {
+            "description": "Invalid or missing internal service token"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mint platform JWT for an application (internal services only)",
+        "tags": [
+          "OAuth 2.0"
+        ]
+      }
+    },
+    "/": {
+      "get": {
+        "operationId": "HealthController_checkRoot",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The Health Check is successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {},
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The Health Check is not successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "error"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        },
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Health check (root)",
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The Health Check is successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {},
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The Health Check is not successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "error"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        },
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Health check",
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/api/cds/auth/request-otp": {
+      "post": {
+        "operationId": "CdsAuthController_requestOtp",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Request OTP for CDS provider login",
+        "tags": [
+          "CDS Auth"
+        ]
+      }
+    },
+    "/api/cds/auth/verify-otp": {
+      "post": {
+        "operationId": "CdsAuthController_verifyOtp",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Verify OTP and receive CDS provider JWT",
+        "tags": [
+          "CDS Auth"
+        ]
+      }
+    },
+    "/api/cds/providers/{applicationId}": {
+      "get": {
+        "operationId": "CdsAuthController_listProviders",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "List CDS providers for an application",
+        "tags": [
+          "CDS Auth"
+        ]
+      },
+      "post": {
+        "operationId": "CdsAuthController_createProvider",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Register a CDS provider",
+        "tags": [
+          "CDS Auth"
+        ]
+      }
+    },
+    "/api/cds/providers/{applicationId}/{providerId}": {
+      "put": {
+        "operationId": "CdsAuthController_updateProvider",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "providerId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Update a CDS provider",
+        "tags": [
+          "CDS Auth"
+        ]
+      },
+      "delete": {
+        "operationId": "CdsAuthController_deleteProvider",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "providerId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Deactivate a CDS provider",
+        "tags": [
+          "CDS Auth"
+        ]
+      }
+    },
+    "/api/admin/end-users": {
+      "get": {
+        "operationId": "EndUserController_list",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Search by email/name/NPI",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "PENDING",
+                "ACTIVE",
+                "DISABLED"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "appId",
+            "required": false,
+            "in": "query",
+            "description": "Filter to users with access to a given app",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EndUserSummaryDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List end-users in the operator's organization",
+        "tags": [
+          "End Users"
+        ]
+      },
+      "post": {
+        "operationId": "EndUserController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEndUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndUserDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Invite a new end-user; grants apps + (optional) sites; sends invite email",
+        "tags": [
+          "End Users"
+        ]
+      }
+    },
+    "/api/admin/end-users/{id}": {
+      "get": {
+        "operationId": "EndUserController_detail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndUserDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get end-user detail (apps, sites, external identities)",
+        "tags": [
+          "End Users"
+        ]
+      }
+    },
+    "/api/admin/end-users/{id}/access/apps/{appId}": {
+      "post": {
+        "operationId": "EndUserController_grantApp",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantAppAccessDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Grant end-user access to an application",
+        "tags": [
+          "End Users"
+        ]
+      },
+      "delete": {
+        "operationId": "EndUserController_revokeApp",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke end-user access to an application",
+        "tags": [
+          "End Users"
+        ]
+      }
+    },
+    "/api/admin/end-users/{id}/access/sites/{siteId}": {
+      "post": {
+        "operationId": "EndUserController_grantSite",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "siteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantSiteAccessDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Grant end-user access to a specific site (narrows app-level access)",
+        "tags": [
+          "End Users"
+        ]
+      },
+      "delete": {
+        "operationId": "EndUserController_revokeSite",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "siteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke end-user access to a specific site",
+        "tags": [
+          "End Users"
+        ]
+      }
+    },
+    "/api/admin/end-users/{id}/external-identities": {
+      "post": {
+        "operationId": "EndUserController_bindExternalIdentity",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExternalIdentityInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Bind an EHR provider FHIR ID to an end-user (for SMART standalone match)",
+        "tags": [
+          "End Users"
+        ]
+      }
+    },
+    "/api/admin/end-users/{id}/external-identities/{ehrName}/{fhirId}": {
+      "delete": {
+        "operationId": "EndUserController_unbindExternalIdentity",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ehrName",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fhirId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Unbind an EHR provider FHIR ID from an end-user",
+        "tags": [
+          "End Users"
+        ]
+      }
+    },
+    "/api/admin/applications/{appId}/end-users": {
+      "get": {
+        "operationId": "EndUserController_listAllowedAppUsers",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AllowedAppUserDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List end-users with access to a given application",
+        "tags": [
+          "End Users"
+        ]
+      }
+    },
+    "/oauth/access-check": {
+      "post": {
+        "operationId": "InternalAccessController_check",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckAccessDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Access decision returned"
+          },
+          "401": {
+            "description": "Caller is not an internal service"
+          },
+          "403": {
+            "description": "Access denied (closed policy / disabled / site mismatch)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Resolve EHR/OTP user to EndUser + check app access (internal services only)",
+        "tags": [
+          "OAuth 2.0"
+        ]
+      }
+    },
+    "/api/users/me/connections": {
+      "get": {
+        "operationId": "MeController_listConnections",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Connections returned"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List partner apps the end-user has consented to",
+        "tags": [
+          "End-user Self-service"
+        ]
+      }
+    },
+    "/api/users/me/connections/{clientId}": {
+      "delete": {
+        "operationId": "MeController_revokeConnection",
+        "parameters": [
+          {
+            "name": "clientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Connection revoked"
+          },
+          "404": {
+            "description": "No active grant for this clientId"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke a partner app — invalidates outstanding tokens and removes ConsentGrant",
+        "tags": [
+          "End-user Self-service"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Health Services Admin API",
+    "description": "OAuth 2.0 Authorization Server + Organization/Application Management — auto-generated OpenAPI spec",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "SignUpDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "secureP@ss1",
+            "minLength": 8
+          },
+          "firstName": {
+            "type": "string",
+            "example": "John"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Doe"
+          },
+          "organizationName": {
+            "type": "string",
+            "example": "Acme Health"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "firstName",
+          "lastName",
+          "organizationName"
+        ]
+      },
+      "SignUpResponseDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACTIVE"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "accessToken": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "number"
+          },
+          "refreshToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "organizationId",
+          "status"
+        ]
+      },
+      "SignInDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "secureP@ss1"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "SignInResponseDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "organizationName": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "OWNER",
+              "ADMIN",
+              "MEMBER"
+            ]
+          },
+          "accessToken": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "number"
+          },
+          "refreshToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "email",
+          "firstName",
+          "lastName",
+          "organizationId",
+          "organizationName",
+          "role",
+          "accessToken",
+          "expiresIn",
+          "refreshToken"
+        ]
+      },
+      "RefreshDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "description": "Opaque refresh token received from signin or token exchange"
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "RefreshResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "number"
+          },
+          "refreshToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessToken",
+          "expiresIn",
+          "refreshToken"
+        ]
+      },
+      "MessageResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Operation successful"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "SsoCodeResponseDto": {
+        "type": "object",
+        "properties": {
+          "sso_code": {
+            "type": "string",
+            "description": "Opaque SSO code (30s TTL, one-time use)"
+          }
+        },
+        "required": [
+          "sso_code"
+        ]
+      },
+      "TokenRequestDto": {
+        "type": "object",
+        "properties": {
+          "grant_type": {
+            "type": "string",
+            "description": "OAuth 2.0 grant type",
+            "enum": [
+              "client_credentials",
+              "urn:ietf:params:oauth:grant-type:jwt-bearer",
+              "authorization_code",
+              "refresh_token"
+            ],
+            "example": "client_credentials"
+          },
+          "refresh_token": {
+            "type": "string",
+            "description": "Refresh token (for refresh_token grant type)"
+          },
+          "client_id": {
+            "type": "string",
+            "description": "Client ID (required for post-body auth or jwt-bearer grant)",
+            "example": "app_01JXXXXXXXXX"
+          },
+          "client_secret": {
+            "type": "string",
+            "description": "Client secret (for client_credentials with post-body auth)",
+            "example": "hs_secret_xxxxxxxx"
+          },
+          "assertion": {
+            "type": "string",
+            "description": "JWT assertion (for jwt-bearer grant type)"
+          },
+          "scope": {
+            "type": "string",
+            "description": "Space-delimited list of requested scopes. Available scopes: FHIR.R4/AllergyIntolerance.read, FHIR.R4/AllergyIntolerance.write, FHIR.R4/Appointment.read, FHIR.R4/Appointment.write, FHIR.R4/Communication.read, FHIR.R4/Communication.write, FHIR.R4/Condition.read, FHIR.R4/Condition.write, FHIR.R4/Coverage.read, FHIR.R4/Coverage.write, FHIR.R4/DocumentReference.read, FHIR.R4/DocumentReference.write, FHIR.R4/Encounter.read, FHIR.R4/Encounter.write, FHIR.R4/Location.read, FHIR.R4/MedicationStatement.read, FHIR.R4/MedicationStatement.write, FHIR.R4/Observation.read, FHIR.R4/Observation.write, FHIR.R4/Patient.read, FHIR.R4/Patient.write, FHIR.R4/Practitioner.read, FHIR.R4/ServiceRequest.read",
+            "example": "FHIR.R4/Patient.read FHIR.R4/Observation.read"
+          },
+          "code": {
+            "type": "string",
+            "description": "Authorization code (for authorization_code grant type)"
+          },
+          "redirect_uri": {
+            "type": "string",
+            "description": "Redirect URI (must match the one used in the authorize request)"
+          },
+          "code_verifier": {
+            "type": "string",
+            "description": "PKCE code verifier (for authorization_code grant with S256 challenge)"
+          }
+        },
+        "required": [
+          "grant_type"
+        ]
+      },
+      "TokenResponseDto": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "example": "eyJhbGciOiJSUzM4NCIs..."
+          },
+          "token_type": {
+            "type": "string",
+            "example": "Bearer"
+          },
+          "expires_in": {
+            "type": "number",
+            "example": 3600,
+            "description": "Token lifetime in seconds"
+          },
+          "scope": {
+            "type": "string",
+            "example": "patient/*.read",
+            "description": "Granted scopes"
+          }
+        },
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_in",
+          "scope"
+        ]
+      },
+      "OAuthErrorDto": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "invalid_client"
+          },
+          "error_description": {
+            "type": "string",
+            "example": "Unknown client"
+          }
+        },
+        "required": [
+          "error",
+          "error_description"
+        ]
+      },
+      "IntrospectRequestDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The token to introspect"
+          },
+          "token_type_hint": {
+            "type": "string",
+            "description": "Hint about the token type (RFC 7662 S2.1)",
+            "enum": [
+              "access_token",
+              "refresh_token"
+            ]
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "IntrospectResponseDto": {
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "example": true
+          },
+          "sub": {
+            "type": "string",
+            "example": "app-id-123"
+          },
+          "client_id": {
+            "type": "string",
+            "example": "app_01JXXXXXXXXX"
+          },
+          "scope": {
+            "type": "string",
+            "example": "patient/*.read"
+          },
+          "iss": {
+            "type": "string",
+            "example": "http://localhost:3002"
+          },
+          "exp": {
+            "type": "number",
+            "example": 1700000000
+          },
+          "iat": {
+            "type": "number",
+            "example": 1699996400
+          },
+          "token_type": {
+            "type": "string",
+            "example": "Bearer"
+          },
+          "ehr_access": {
+            "description": "List of EHRs this app has access to",
+            "example": [
+              "epic",
+              "cerner"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "active"
+        ]
+      },
+      "RevokeRequestDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The token to revoke"
+          },
+          "token_type_hint": {
+            "type": "string",
+            "description": "Hint about the token type (RFC 7009 S2.1)",
+            "enum": [
+              "access_token",
+              "refresh_token"
+            ]
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "ConsentDecisionDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "OrganizationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "_count": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateOrgDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Organization name",
+            "example": "Acme Health"
+          },
+          "domain": {
+            "type": "string",
+            "description": "Email domain for auto-join",
+            "example": "acmehealth.com"
+          }
+        }
+      },
+      "UserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "OWNER",
+              "ADMIN",
+              "MEMBER"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACTIVE",
+              "DISABLED"
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "firstName",
+          "lastName",
+          "role",
+          "status",
+          "createdAt"
+        ]
+      },
+      "PaginatedUsersDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "description": "Total count of records"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Page size"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserDto"
+            }
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "limit",
+          "data"
+        ]
+      },
+      "UserAppAccessDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "applicationId": {
+            "type": "string"
+          },
+          "accessLevel": {
+            "type": "string",
+            "enum": [
+              "READONLY",
+              "FULL"
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "applicationId",
+          "accessLevel",
+          "createdAt"
+        ]
+      },
+      "JwksKeyDto": {
+        "type": "object",
+        "properties": {
+          "kty": {
+            "type": "string"
+          },
+          "alg": {
+            "type": "string"
+          },
+          "kid": {
+            "type": "string"
+          },
+          "use": {
+            "type": "string"
+          }
+        }
+      },
+      "JwksDto": {
+        "type": "object",
+        "properties": {
+          "uri": {
+            "type": "string"
+          },
+          "keys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JwksKeyDto"
+            }
+          }
+        }
+      },
+      "AppEhrAccessDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "applicationId": {
+            "type": "string"
+          },
+          "ehrName": {
+            "type": "string"
+          },
+          "ehrTokenScopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ehrConfig": {
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "DISABLED"
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "applicationId",
+          "ehrName",
+          "ehrTokenScopes",
+          "ehrConfig",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ApplicationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "string"
+          },
+          "redirectUris": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedGrantTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tokenLifetime": {
+            "type": "number"
+          },
+          "jwks": {
+            "$ref": "#/components/schemas/JwksDto"
+          },
+          "appType": {
+            "type": "string",
+            "enum": [
+              "BRIDGE",
+              "CDS",
+              "WORKFLOW",
+              "CUSTOM"
+            ]
+          },
+          "clientType": {
+            "type": "string",
+            "enum": [
+              "PUBLIC",
+              "CONFIDENTIAL"
+            ]
+          },
+          "smartLaunchUrl": {
+            "type": "string"
+          },
+          "cdsConfig": {
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "DISABLED"
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "ehrAccess": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppEhrAccessDto"
+            }
+          },
+          "userAccessLevel": {
+            "type": "string",
+            "enum": [
+              "FULL",
+              "READONLY"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "organizationId",
+          "clientId",
+          "redirectUris",
+          "allowedGrantTypes",
+          "scopes",
+          "tokenLifetime",
+          "appType",
+          "clientType",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PaginatedApplicationsDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "description": "Total count of records"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Page size"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationDto"
+            }
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "limit",
+          "data"
+        ]
+      },
+      "CreateApplicationDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "My Application"
+          },
+          "allowedGrantTypes": {
+            "example": [
+              "authorization_code",
+              "refresh_token"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "scopes": {
+            "example": [
+              "openid",
+              "profile"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tokenLifetime": {
+            "type": "number",
+            "example": 3600
+          },
+          "appType": {
+            "type": "string",
+            "example": "BRIDGE"
+          },
+          "clientType": {
+            "type": "string",
+            "example": "public"
+          },
+          "smartLaunchUrl": {
+            "type": "string",
+            "example": "https://app.example.com/launch"
+          },
+          "redirectUris": {
+            "example": [
+              "https://app.example.com/callback"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cdsConfig": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "CreateApplicationResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "string"
+          },
+          "redirectUris": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedGrantTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tokenLifetime": {
+            "type": "number"
+          },
+          "jwks": {
+            "$ref": "#/components/schemas/JwksDto"
+          },
+          "appType": {
+            "type": "string",
+            "enum": [
+              "BRIDGE",
+              "CDS",
+              "WORKFLOW",
+              "CUSTOM"
+            ]
+          },
+          "clientType": {
+            "type": "string",
+            "enum": [
+              "PUBLIC",
+              "CONFIDENTIAL"
+            ]
+          },
+          "smartLaunchUrl": {
+            "type": "string"
+          },
+          "cdsConfig": {
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "DISABLED"
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "ehrAccess": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppEhrAccessDto"
+            }
+          },
+          "userAccessLevel": {
+            "type": "string",
+            "enum": [
+              "FULL",
+              "READONLY"
+            ]
+          },
+          "clientSecret": {
+            "type": "string",
+            "description": "Client secret (shown only once)"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "organizationId",
+          "clientId",
+          "redirectUris",
+          "allowedGrantTypes",
+          "scopes",
+          "tokenLifetime",
+          "appType",
+          "clientType",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateApplicationDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Updated Application Name"
+          },
+          "allowedGrantTypes": {
+            "example": [
+              "authorization_code"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "scopes": {
+            "example": [
+              "openid"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tokenLifetime": {
+            "type": "number",
+            "example": 7200
+          },
+          "appType": {
+            "type": "string",
+            "example": "BRIDGE"
+          },
+          "clientType": {
+            "type": "string",
+            "example": "confidential"
+          },
+          "smartLaunchUrl": {
+            "type": "string",
+            "example": "https://app.example.com/launch"
+          },
+          "redirectUris": {
+            "example": [
+              "https://app.example.com/callback"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "autoProvisioningPolicy": {
+            "type": "string",
+            "example": "open",
+            "enum": [
+              "closed",
+              "open",
+              "domain-locked"
+            ]
+          },
+          "cdsConfig": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "RotateSecretResponseDto": {
+        "type": "object",
+        "properties": {
+          "clientSecret": {
+            "type": "string",
+            "description": "New client secret (shown only once)"
+          }
+        },
+        "required": [
+          "clientSecret"
+        ]
+      },
+      "JwksUpdateResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "uri": {
+            "type": "string"
+          },
+          "keyCount": {
+            "type": "number"
+          },
+          "keys": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "message",
+          "uri",
+          "keyCount"
+        ]
+      },
+      "SetApiKeyDto": {
+        "type": "object",
+        "properties": {
+          "apiKey": {
+            "type": "string",
+            "description": "LLM provider API key",
+            "example": "sk-..."
+          }
+        },
+        "required": [
+          "apiKey"
+        ]
+      },
+      "CreateWorkflowDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Workflow name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Workflow description"
+          },
+          "nodes": {
+            "type": "array",
+            "description": "Initial node definitions"
+          },
+          "edges": {
+            "type": "array",
+            "description": "Initial edge definitions"
+          },
+          "config": {
+            "type": "object",
+            "description": "Workflow configuration"
+          },
+          "triggerType": {
+            "type": "string",
+            "description": "Trigger type",
+            "enum": [
+              "manual",
+              "webhook",
+              "schedule"
+            ]
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "WorkflowDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "applicationId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "edges": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "config": {
+            "type": "object"
+          },
+          "triggerType": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "ACTIVE",
+              "DISABLED"
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "applicationId",
+          "name",
+          "nodes",
+          "edges",
+          "config",
+          "triggerType",
+          "version",
+          "status",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "WorkflowSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "triggerType": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "ACTIVE",
+              "DISABLED"
+            ]
+          },
+          "version": {
+            "type": "number"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "triggerType",
+          "status",
+          "version",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PaginatedWorkflowsDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "description": "Total count of records"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Page size"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowSummaryDto"
+            }
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "limit",
+          "data"
+        ]
+      },
+      "UpdateWorkflowDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Workflow name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Workflow description"
+          },
+          "nodes": {
+            "type": "array",
+            "description": "Node definitions"
+          },
+          "edges": {
+            "type": "array",
+            "description": "Edge definitions"
+          },
+          "config": {
+            "type": "object",
+            "description": "Workflow configuration"
+          },
+          "triggerType": {
+            "type": "string",
+            "description": "Trigger type",
+            "enum": [
+              "manual",
+              "webhook",
+              "schedule"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "Workflow status",
+            "enum": [
+              "DRAFT",
+              "ACTIVE",
+              "DISABLED"
+            ]
+          }
+        }
+      },
+      "WorkflowTemplateDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "edges": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "config": {
+            "type": "object"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "category",
+          "nodes",
+          "edges",
+          "config",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateFromTemplateDto": {
+        "type": "object",
+        "properties": {
+          "templateId": {
+            "type": "string",
+            "description": "Template ID to create workflow from"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name for the new workflow"
+          }
+        },
+        "required": [
+          "templateId",
+          "name"
+        ]
+      },
+      "ExecuteWorkflowDto": {
+        "type": "object",
+        "properties": {
+          "triggerInput": {
+            "type": "object",
+            "description": "Input data for workflow trigger"
+          }
+        }
+      },
+      "ExecuteResponseDto": {
+        "type": "object",
+        "properties": {
+          "executionId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "example": "PENDING"
+          }
+        },
+        "required": [
+          "executionId",
+          "status"
+        ]
+      },
+      "ExecutionSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "workflowId": {
+            "type": "string"
+          },
+          "workflowName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "RUNNING",
+              "COMPLETED",
+              "FAILED",
+              "CANCELLED"
+            ]
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "completedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "durationMs": {
+            "type": "number"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "workflowId",
+          "workflowName",
+          "status",
+          "createdAt"
+        ]
+      },
+      "PaginatedExecutionsDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "description": "Total count of records"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Page size"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExecutionSummaryDto"
+            }
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "limit",
+          "data"
+        ]
+      },
+      "ExecutionDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "workflowId": {
+            "type": "string"
+          },
+          "workflowName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "RUNNING",
+              "COMPLETED",
+              "FAILED",
+              "CANCELLED"
+            ]
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "completedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "durationMs": {
+            "type": "number"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "triggerInput": {
+            "type": "object"
+          },
+          "stepResults": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "output": {
+            "type": "object"
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "workflowId",
+          "workflowName",
+          "status",
+          "createdAt"
+        ]
+      },
+      "ExecutionStepsDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "RUNNING",
+              "COMPLETED",
+              "FAILED",
+              "CANCELLED"
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "status",
+          "steps"
+        ]
+      },
+      "CancelExecutionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "example": "CANCELLED"
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ]
+      },
+      "TokenForAppDto": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "string",
+            "description": "Application UUID to mint a token for"
+          }
+        },
+        "required": [
+          "applicationId"
+        ]
+      },
+      "EndUserSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "emailVerified": {
+            "type": "boolean"
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "npi": {
+            "type": "string",
+            "nullable": true
+          },
+          "specialty": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACTIVE",
+              "DISABLED"
+            ]
+          },
+          "organizationId": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastLoginAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "appsCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "emailVerified",
+          "status",
+          "appsCount"
+        ]
+      },
+      "EndUserAppAccessDto": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "string"
+          },
+          "applicationName": {
+            "type": "string"
+          },
+          "accessLevel": {
+            "type": "string",
+            "enum": [
+              "READONLY",
+              "FULL"
+            ]
+          },
+          "grantSource": {
+            "type": "string"
+          },
+          "grantedAt": {
+            "type": "string"
+          },
+          "grantedById": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "applicationId",
+          "applicationName",
+          "accessLevel",
+          "grantSource",
+          "grantedAt"
+        ]
+      },
+      "EndUserSiteAccessDto": {
+        "type": "object",
+        "properties": {
+          "siteId": {
+            "type": "string"
+          },
+          "siteName": {
+            "type": "string"
+          },
+          "applicationId": {
+            "type": "string"
+          },
+          "applicationName": {
+            "type": "string"
+          },
+          "accessLevel": {
+            "type": "string",
+            "enum": [
+              "READONLY",
+              "FULL"
+            ]
+          },
+          "grantedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "siteId",
+          "siteName",
+          "applicationId",
+          "applicationName",
+          "accessLevel",
+          "grantedAt"
+        ]
+      },
+      "EndUserExternalIdentityDto": {
+        "type": "object",
+        "properties": {
+          "ehrName": {
+            "type": "string"
+          },
+          "fhirId": {
+            "type": "string"
+          },
+          "emailAtSeen": {
+            "type": "string",
+            "nullable": true
+          },
+          "firstSeenAt": {
+            "type": "string"
+          },
+          "lastSeenAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ehrName",
+          "fhirId",
+          "firstSeenAt",
+          "lastSeenAt"
+        ]
+      },
+      "EndUserDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "emailVerified": {
+            "type": "boolean"
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "npi": {
+            "type": "string",
+            "nullable": true
+          },
+          "specialty": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACTIVE",
+              "DISABLED"
+            ]
+          },
+          "organizationId": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastLoginAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "appsCount": {
+            "type": "number"
+          },
+          "apps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EndUserAppAccessDto"
+            }
+          },
+          "sites": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EndUserSiteAccessDto"
+            }
+          },
+          "externalIdentities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EndUserExternalIdentityDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "emailVerified",
+          "status",
+          "appsCount",
+          "apps",
+          "sites",
+          "externalIdentities"
+        ]
+      },
+      "ExternalIdentityInputDto": {
+        "type": "object",
+        "properties": {
+          "ehrName": {
+            "type": "string",
+            "example": "cerner"
+          },
+          "fhirId": {
+            "type": "string",
+            "example": "Practitioner/12345"
+          }
+        },
+        "required": [
+          "ehrName",
+          "fhirId"
+        ]
+      },
+      "CreateEndUserDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "npi": {
+            "type": "string"
+          },
+          "specialty": {
+            "type": "string"
+          },
+          "applicationIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "siteIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "externalIdentities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalIdentityInputDto"
+            }
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "GrantAppAccessDto": {
+        "type": "object",
+        "properties": {
+          "accessLevel": {
+            "type": "string",
+            "enum": [
+              "READONLY",
+              "FULL"
+            ]
+          }
+        },
+        "required": [
+          "accessLevel"
+        ]
+      },
+      "GrantSiteAccessDto": {
+        "type": "object",
+        "properties": {
+          "accessLevel": {
+            "type": "string",
+            "enum": [
+              "READONLY",
+              "FULL"
+            ]
+          }
+        },
+        "required": [
+          "accessLevel"
+        ]
+      },
+      "AllowedAppUserDto": {
+        "type": "object",
+        "properties": {
+          "endUserId": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "accessLevel": {
+            "type": "string",
+            "enum": [
+              "READONLY",
+              "FULL"
+            ]
+          },
+          "grantSource": {
+            "type": "string"
+          },
+          "grantedAt": {
+            "type": "string"
+          },
+          "lastLoginAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "endUserId",
+          "email",
+          "accessLevel",
+          "grantSource",
+          "grantedAt"
+        ]
+      },
+      "CheckAccessDto": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  }
+}

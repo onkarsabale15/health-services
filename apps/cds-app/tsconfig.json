@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": "./",
+    "paths": {
+      "@langchain/langgraph/prebuilt": ["../../node_modules/@langchain/langgraph/dist/prebuilt/index.d.cts"]
+    }
+  },
+  "include": ["src"]
+}

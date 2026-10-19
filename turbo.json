@@ -1,0 +1,35 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "db:generate": {
+      "cache": false,
+      "inputs": ["packages/infra/prisma/schema.prisma"],
+      "outputs": ["../../node_modules/.prisma/client/**"]
+    },
+    "build": {
+      "dependsOn": ["^build", "@hs/infra#db:generate"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+    },
+    "@hs/bridge-client#build": {
+      "dependsOn": ["@hs/bridge-api#build", "@hs/infra#build", "@hs/infra#db:generate"],
+      "outputs": ["dist/**", "openapi.json", "src/generated/**"]
+    },
+    "dev": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "dependsOn": ["^build"]
+    },
+    "lint:fix": {
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "dependsOn": ["build"]
+    },
+    "clean": {
+      "cache": false
+    }
+  }
+}

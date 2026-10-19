@@ -1,0 +1,67 @@
+{
+  "name": "@hs/cds-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "nest build",
+    "dev": "nest start --watch",
+    "start": "node dist/main.js",
+    "clean": "rm -rf dist",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "jest",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
+  },
+  "dependencies": {
+    "@hs/ai": "*",
+    "@hs/bridge-client": "*",
+    "@hs/config": "*",
+    "@hs/infra": "*",
+    "@hs/observability": "*",
+    "@langchain/anthropic": "^1.3.25",
+    "@langchain/core": "^1.1.34",
+    "@langchain/langgraph": "^1.2.5",
+    "@langchain/openai": "^1.3.0",
+    "@medplum/fhirtypes": "^4.5.2",
+    "@nestjs/common": "^11.1.17",
+    "@nestjs/config": "^4.0.3",
+    "@nestjs/core": "^11.1.17",
+    "@nestjs/platform-express": "^11.1.17",
+    "@nestjs/swagger": "^11.2.6",
+    "@nestjs/terminus": "^11.1.1",
+    "@nestjs/throttler": "^6.4.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.4",
+    "cookie-parser": "^1.4.7",
+    "helmet": "^8.0.0",
+    "langchain": "^1.2.35",
+    "pdf-lib": "^1.17.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "uuid": "^11.1.1"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "11.0.5",
+    "@nestjs/testing": "^11.1.17",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.0",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^22.0.0",
+    "@types/uuid": "^10.0.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.0",
+    "typescript": "^5.7.0"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "moduleFileExtensions": ["ts", "tsx", "js", "json"],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.ts$": "ts-jest"
+    },
+    "collectCoverageFrom": ["**/*.ts"],
+    "coverageDirectory": "../coverage"
+  }
+}

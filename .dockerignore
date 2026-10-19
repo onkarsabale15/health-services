@@ -1,0 +1,38 @@
+# Dependencies & build outputs — reinstalled/rebuilt inside the image.
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+.turbo
+
+# VCS & editor/tooling metadata.
+.git
+.gitignore
+.gitattributes
+.github
+.vscode
+.idea
+
+# Secrets & env — never bake into an image (values come from the platform/Doppler).
+**/.env
+**/.env.*
+!**/.env.example
+
+# Local scratch, generated artifacts, and large non-build dirs.
+.superpowers
+graphify-out
+docs/knowledge-base
+**/*.log
+**/coverage
+**/.DS_Store
+**/*.tsbuildinfo
+
+# Agent / dev meta not needed to build.
+.claude
+**/*.md
+!**/README.md
+
+# Docker files themselves.
+Dockerfile
+.dockerignore
+docker-compose.yml

@@ -1,0 +1,64 @@
+import { Controller, Get } from '@nestjs/common';
+import { HealthCheck, HealthCheckService } from '@nestjs/terminus';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { db } from '@hs/infra';
+import { cache } from '@hs/infra';
+import { messaging } from '@hs/infra';
+import { Public } from '../../decorators/public.decorator';
+
+@ApiTags('Health')
+@Controller()
+@Public()
+export class HealthController {
+  constructor(private health: HealthCheckService) {}
+
+  @Get()
+  @HealthCheck()
+  @ApiOperation({ summary: 'Health check (root)' })
+  @ApiResponse({ status: 200, description: 'Service is healthy' })
+  @ApiResponse({ status: 503, description: 'Service is unhealthy' })
+  checkRoot() {
+    return this.check();
+  }
+
+  @Get('health')
+  @HealthCheck()
+  @ApiOperation({ summary: 'Health check' })
+  @ApiResponse({ status: 200, description: 'Service is healthy' })
+  @ApiResponse({ status: 503, description: 'Service is unhealthy' })
+  async check() {
+    const result = await this.health.check([
+      () => this.checkDatabase(),
+      () => this.checkRedis(),
+      () => this.checkKafka(),
+    ]);
+    return { service: 'workflow-executor', ...result };
+  }
+
+  private async checkDatabase() {
+    const isHealthy = await db.isHealthy().catch(() => false);
+    return {
+      database: {
+        status: isHealthy ? ('up' as const) : ('down' as const),
+      },
+    };
+  }
+
+  private async checkRedis() {
+    const isHealthy = await cache.isHealthy().catch(() => false);
+    return {
+      redis: {
+        status: isHealthy ? ('up' as const) : ('down' as const),
+      },
+    };
+  }
+
+  private async checkKafka() {
+    const isHealthy = await messaging.isHealthy().catch(() => false);
+    return {
+      messaging: {
+        status: isHealthy ? ('up' as const) : ('down' as const),
+      },
+    };
+  }
+}

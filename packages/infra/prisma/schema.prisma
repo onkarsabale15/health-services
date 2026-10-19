@@ -1,0 +1,695 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Organization ────────────────────────────────────────────────────────────
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  DISABLED
+}
+
+enum AppStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum AppType {
+  BRIDGE
+  CDS
+  WORKFLOW
+  CUSTOM
+  PARTNER
+  MCP
+}
+
+enum ClientType {
+  PUBLIC
+  CONFIDENTIAL
+}
+
+enum AccessLevel {
+  READONLY
+  FULL
+}
+
+model Organization {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  domain    String?  @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users        User[]
+  applications Application[]
+  endUsers     EndUser[]
+
+  @@map("organizations")
+}
+
+// ─── User ────────────────────────────────────────────────────────────────────
+
+model User {
+  id             String     @id @default(uuid()) @db.Uuid
+  email          String     @unique
+  emailVerified  Boolean    @default(false) @map("email_verified")
+  passwordHash   String     @map("password_hash")
+  firstName      String     @map("first_name")
+  lastName       String     @map("last_name")
+  role           OrgRole    @default(MEMBER)
+  status         UserStatus @default(PENDING)
+  organizationId String     @map("organization_id") @db.Uuid
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+
+  organization Organization    @relation(fields: [organizationId], references: [id])
+  appAccess    UserAppAccess[]
+
+  @@index([organizationId])
+  @@map("users")
+}
+
+// ─── End User (Phase C IdP) ──────────────────────────────────────────────────
+//
+// Canonical identity for non-operator humans — clinicians launching SMART apps,
+// providers signing into CDS, end-users of partner OIDC apps. Migrates the
+// `CdsProvider` table; coexists with `User` (operators).
+
+model EndUser {
+  id             String     @id @default(uuid()) @db.Uuid
+  email          String     @unique
+  emailVerified  Boolean    @default(false) @map("email_verified")
+  firstName      String?    @map("first_name")
+  lastName       String?    @map("last_name")
+  npi            String?
+  specialty      String?
+  status         UserStatus @default(PENDING)
+  organizationId String?    @map("organization_id") @db.Uuid
+  invitedAt      DateTime?  @map("invited_at")
+  invitedById    String?    @map("invited_by_id") @db.Uuid
+  lastLoginAt    DateTime?  @map("last_login_at")
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+
+  organization       Organization?             @relation(fields: [organizationId], references: [id])
+  appAccess          EndUserAppAccess[]
+  siteAccess         EndUserSiteAccess[]
+  externalIdentities EndUserExternalIdentity[]
+  consents           ConsentGrant[]
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("end_users")
+}
+
+// ─── EndUser → App access (the IdP gate) ────────────────────────────────────
+
+model EndUserAppAccess {
+  id            String      @id @default(uuid()) @db.Uuid
+  endUserId     String      @map("end_user_id") @db.Uuid
+  applicationId String      @map("application_id") @db.Uuid
+  accessLevel   AccessLevel @default(FULL)
+  grantedAt     DateTime    @default(now()) @map("granted_at")
+  grantedById   String?     @map("granted_by_id") @db.Uuid
+  /// 'manual' | 'auto-open' | 'auto-domain'  — provenance for audit / admin review.
+  grantSource   String      @default("manual") @map("grant_source")
+  revokedAt     DateTime?   @map("revoked_at")
+  revokedById   String?     @map("revoked_by_id") @db.Uuid
+
+  endUser     EndUser     @relation(fields: [endUserId], references: [id], onDelete: Cascade)
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([endUserId, applicationId])
+  @@index([endUserId])
+  @@index([applicationId])
+  @@map("end_user_app_access")
+}
+
+// ─── EndUser → Site access (optional narrowing within an app) ───────────────
+
+model EndUserSiteAccess {
+  id          String      @id @default(uuid()) @db.Uuid
+  endUserId   String      @map("end_user_id") @db.Uuid
+  siteId      String      @map("site_id") @db.Uuid
+  accessLevel AccessLevel @default(FULL)
+  grantedAt   DateTime    @default(now()) @map("granted_at")
+  grantedById String?     @map("granted_by_id") @db.Uuid
+  revokedAt   DateTime?   @map("revoked_at")
+
+  endUser EndUser       @relation(fields: [endUserId], references: [id], onDelete: Cascade)
+  site    EhrSiteConfig @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([endUserId, siteId])
+  @@index([endUserId])
+  @@index([siteId])
+  @@map("end_user_site_access")
+}
+
+// ─── EndUser external identity map ──────────────────────────────────────────
+//
+// One (ehrName, fhirId) → one EndUser. Bootstrapped by email match on the
+// first SMART launch from a new EHR; subsequent launches hit by (ehrName,
+// fhirId) directly (cheap path). Carries `emailAtSeen` for audit.
+
+model EndUserExternalIdentity {
+  id          String   @id @default(uuid()) @db.Uuid
+  endUserId   String   @map("end_user_id") @db.Uuid
+  ehrName     String   @map("ehr_name")
+  fhirId      String   @map("fhir_id")
+  emailAtSeen String?  @map("email_at_seen")
+  firstSeenAt DateTime @default(now()) @map("first_seen_at")
+  lastSeenAt  DateTime @default(now()) @map("last_seen_at")
+
+  endUser EndUser @relation(fields: [endUserId], references: [id], onDelete: Cascade)
+
+  @@unique([ehrName, fhirId])
+  @@index([endUserId])
+  @@map("end_user_external_identities")
+}
+
+// ─── OIDC consent grants ─────────────────────────────────────────────────────
+//
+// Persists per-(EndUser, partner clientId) consents. Phase C5 reads/writes
+// this when the consent screen approves; Phase C6 lists them on the
+// "Connected apps" end-user page.
+
+model ConsentGrant {
+  id         String    @id @default(uuid()) @db.Uuid
+  endUserId  String    @map("end_user_id") @db.Uuid
+  clientId   String    @map("client_id")
+  scopes     String[]
+  grantedAt  DateTime  @default(now()) @map("granted_at")
+  expiresAt  DateTime? @map("expires_at")
+  revokedAt  DateTime? @map("revoked_at")
+  lastUsedAt DateTime? @map("last_used_at")
+
+  endUser EndUser @relation(fields: [endUserId], references: [id], onDelete: Cascade)
+
+  @@unique([endUserId, clientId])
+  @@index([endUserId])
+  @@index([clientId])
+  @@map("consent_grants")
+}
+
+// ─── Application (OAuth client) ──────────────────────────────────────────────
+
+model Application {
+  id                     String     @id @default(uuid()) @db.Uuid
+  name                   String
+  organizationId         String     @map("organization_id") @db.Uuid
+  clientId               String     @unique @map("client_id")
+  clientSecretHash       String?    @map("client_secret_hash")
+  redirectUris           String[]   @map("redirect_uris")
+  allowedGrantTypes      String[]   @map("allowed_grant_types")
+  scopes                 String[]   @default([])
+  tokenLifetime          Int        @default(3600) @map("token_lifetime")
+  jwks                   Json?
+  appType                AppType    @default(BRIDGE) @map("app_type")
+  clientType             ClientType @default(CONFIDENTIAL) @map("client_type")
+  smartLaunchUrl         String?    @map("smart_launch_url")
+  cdsConfig              Json?      @map("cds_config")
+  llmConfig              Json?      @map("llm_config")
+  /// Phase C IdP gate: 'closed' (admin must invite first) | 'open' (auto-create + auto-grant on first launch) | 'domain-locked' (auto-create only if email domain matches Organization.domain).
+  autoProvisioningPolicy String     @default("closed") @map("auto_provisioning_policy")
+  status                 AppStatus  @default(ACTIVE)
+  createdAt              DateTime   @default(now()) @map("created_at")
+  updatedAt              DateTime   @updatedAt @map("updated_at")
+
+  organization   Organization       @relation(fields: [organizationId], references: [id])
+  ehrAccess      AppEhrAccess[]
+  userAccess     UserAppAccess[]
+  endUserAccess  EndUserAppAccess[]
+  cdsRules       CdsRule[]
+  workflows      Workflow[]
+  appTools       AppToolAccess[]
+
+  @@index([organizationId])
+  @@index([appType])
+  @@index([id, organizationId])
+  @@map("applications")
+}
+
+// ─── App EHR Access (per-app, per-EHR config) ───────────────────────────────
+
+model AppEhrAccess {
+  id                  String    @id @default(uuid()) @db.Uuid
+  applicationId       String    @map("application_id") @db.Uuid
+  ehrName             String    @map("ehr_name")
+  ehrAppType          String    @default("system") @map("ehr_app_type") // system | provider-ehr | provider-standalone
+  ehrTokenScopes      String[]  @default([]) @map("ehr_token_scopes")
+  ehrConfig           Json      @default("{}") @map("ehr_config")
+  jwks                Json?
+  providerRestriction String    @default("open") @map("provider_restriction") // open | restricted
+  status              AppStatus @default(ACTIVE)
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  application Application         @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  sites       EhrSiteConfig[]
+  providers   EhrProviderAccess[]
+
+  @@unique([applicationId, ehrName, ehrAppType])
+  @@index([applicationId])
+  @@map("app_ehr_access")
+}
+
+// ─── EHR Provider Access (per-provider, per-site allowlist) ──────────────────
+// A provider can be allowed on specific sites within an integration.
+// Same provider may appear on multiple sites/integrations with different access.
+
+// DEPRECATED — superseded by EndUser + EndUserAppAccess + EndUserExternalIdentity (Phase C, 2026-05-06).
+// Bridge SMART launch no longer reads from this table. Admin UI's "Provider Approvals" tab remains
+// the only consumer pending Phase D's CDS-into-BRIDGE refactor. Drop in a follow-up after the live
+// db has had ≥2 weeks observation with C7 deployed.
+model EhrProviderAccess {
+  id             String   @id @default(uuid()) @db.Uuid
+  ehrAccessId    String   @map("ehr_access_id") @db.Uuid
+  siteId         String?  @map("site_id") @db.Uuid // null = all sites in this integration
+  providerFhirId String   @map("provider_fhir_id") // e.g., "Practitioner/12345"
+  providerName   String?  @map("provider_name")
+  providerEmail  String?  @map("provider_email")
+  providerNpi    String?  @map("provider_npi")
+  isApproved     Boolean  @default(false) @map("is_approved")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  ehrAccess AppEhrAccess   @relation(fields: [ehrAccessId], references: [id], onDelete: Cascade)
+  site      EhrSiteConfig? @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([ehrAccessId, siteId, providerFhirId])
+  @@index([ehrAccessId])
+  @@index([siteId])
+  @@index([providerFhirId])
+  @@map("ehr_provider_access")
+}
+
+// ─── EHR Site Config (per-site/practice within an integration) ───────────────
+
+model EhrSiteConfig {
+  id              String    @id @default(uuid()) @db.Uuid
+  ehrAccessId     String    @map("ehr_access_id") @db.Uuid
+  name            String
+  siteKey         String    @map("site_key") // e.g., "cerner:ec2458f2-..." — computed from EHR identifiers
+  siteIdentifiers Json      @default("{}") @map("site_identifiers")
+  siteCredentials Json?     @map("site_credentials")
+  siteUrls        Json?     @map("site_urls")
+  isDefault       Boolean   @default(false) @map("is_default")
+  isActive        Boolean   @default(true) @map("is_active")
+  isApproved      Boolean   @default(true) @map("is_approved")
+  status          AppStatus @default(ACTIVE)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  ehrAccess     AppEhrAccess        @relation(fields: [ehrAccessId], references: [id], onDelete: Cascade)
+  providers     EhrProviderAccess[]
+  endUserAccess EndUserSiteAccess[]
+
+  @@unique([ehrAccessId, siteKey])
+  @@unique([ehrAccessId, name])
+  @@index([ehrAccessId])
+  @@map("ehr_site_configs")
+}
+
+// ─── User App Access (which users can access which apps) ─────────────────────
+
+model UserAppAccess {
+  id            String      @id @default(uuid()) @db.Uuid
+  userId        String      @map("user_id") @db.Uuid
+  applicationId String      @map("application_id") @db.Uuid
+  accessLevel   AccessLevel @default(READONLY) @map("access_level")
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, applicationId])
+  @@index([userId])
+  @@index([applicationId])
+  @@map("user_app_access")
+}
+
+// ─── CDS Rule (Clinical Decision Support rules per app) ─────────────────────
+
+enum CdsHook {
+  patient_view        @map("patient-view")
+  encounter_start     @map("encounter-start")
+  encounter_discharge @map("encounter-discharge")
+  order_select        @map("order-select")
+  order_sign          @map("order-sign")
+  appointment_book    @map("appointment-book")
+}
+
+model CdsRule {
+  id             String   @id @default(uuid()) @db.Uuid
+  applicationId  String   @map("application_id") @db.Uuid
+  name           String
+  description    String?
+  hook           CdsHook
+  fhirResources  String[] @default([]) @map("fhir_resources")
+  promptTemplate String?  @map("prompt_template") @db.Text
+  modelProvider  String   @default("anthropic") @map("model_provider")
+  modelName      String   @default("claude-sonnet-4-20250514") @map("model_name")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@index([hook])
+  @@index([applicationId, isActive])
+  @@map("cds_rules")
+}
+
+// ─── Care Plan (persisted CDS analysis results) ─────────────────────────────
+
+enum CarePlanStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  REVOKED
+}
+
+model CarePlan {
+  id              String         @id @default(uuid()) @db.Uuid
+  applicationId   String         @map("application_id") @db.Uuid
+  siteId          String?        @map("site_id") @db.Uuid
+  patientFhirId   String         @map("patient_fhir_id")
+  encounterFhirId String?        @map("encounter_fhir_id")
+  ehrName         String         @map("ehr_name")
+  title           String
+  status          CarePlanStatus @default(DRAFT)
+  cards           Json           @default("[]")
+
+  // Author (who generated the plan — AI or clinician whose session triggered it)
+  providerName   String? @map("provider_name")
+  providerFhirId String? @map("provider_fhir_id")
+
+  // Provenance — how this plan was produced
+  /// Format: "ai:{provider}:{model}" (e.g. "ai:anthropic:claude-opus-4-6") or "manual"
+  generatedBy String? @map("generated_by")
+
+  // Approval audit (DRAFT → ACTIVE)
+  approvedBy     String?   @map("approved_by")
+  approvedByName String?   @map("approved_by_name")
+  approvedAt     DateTime? @map("approved_at")
+
+  // Edit audit (last editor — updates whenever cards/title are edited)
+  editedBy     String? @map("edited_by")
+  editedByName String? @map("edited_by_name")
+
+  // Revocation audit (any → REVOKED)
+  revokedBy     String?   @map("revoked_by")
+  revokedByName String?   @map("revoked_by_name")
+  revokedAt     DateTime? @map("revoked_at")
+  revokedReason String?   @map("revoked_reason")
+
+  patientName   String?   @map("patient_name")
+  encounterType String?   @map("encounter_type")
+  encounterDate DateTime? @map("encounter_date")
+  version       Int       @default(1)
+  parentId      String?   @map("parent_id") @db.Uuid
+  metadata      Json?
+  isDeleted     Boolean   @default(false) @map("is_deleted")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  parent   CarePlan?  @relation("CarePlanVersions", fields: [parentId], references: [id])
+  children CarePlan[] @relation("CarePlanVersions")
+
+  @@index([applicationId, siteId, patientFhirId])
+  @@index([applicationId, patientFhirId])
+  @@index([patientFhirId, ehrName])
+  @@index([parentId])
+  @@map("care_plans")
+}
+
+// ─── CDS Provider (System Mode) ───────────────────────────────────────────────
+
+// DEPRECATED — superseded by EndUser + EndUserAppAccess (Phase C, 2026-05-06).
+// Backfilled to end_users in the C1 baseline migration. cds-auth controller still
+// writes here pending Phase D's CDS-into-BRIDGE refactor (which will rewrite the
+// OTP launch flow against EndUser). Drop in a follow-up once Phase D ships.
+/// Providers registered for platform-auth CDS access (system mode, OTP login)
+model CdsProvider {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  applicationId  String   @map("application_id") @db.Uuid
+  siteId         String?  @map("site_id") @db.Uuid
+  email          String
+  firstName      String   @map("first_name")
+  lastName       String   @map("last_name")
+  npi            String?
+  providerFhirId String?  @map("provider_fhir_id")
+  specialty      String?
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@unique([applicationId, email])
+  @@index([organizationId])
+  @@index([applicationId])
+  @@map("cds_providers")
+}
+
+// ─── Terminology (Reference Data) ─────────────────────────────────────────────
+
+/// ICD-10-CM diagnosis codes — US clinical modification
+model Icd10Code {
+  id          String  @id @default(uuid()) @db.Uuid
+  code        String  @unique // e.g., "E11.65"
+  description String // e.g., "Type 2 diabetes mellitus with hyperglycemia"
+  category    String? // e.g., "E11" — chapter/block grouping
+  isActive    Boolean @default(true) @map("is_active")
+
+  snomedMappings Icd10SnomedMap[]
+
+  @@index([code])
+  @@index([category])
+  @@map("icd10_codes")
+}
+
+/// SNOMED CT clinical terms
+model SnomedCode {
+  id          String  @id @default(uuid()) @db.Uuid
+  code        String  @unique // e.g., "44054006"
+  description String // e.g., "Type 2 diabetes mellitus"
+  semanticTag String? @map("semantic_tag") // e.g., "disorder", "finding", "procedure"
+  isActive    Boolean @default(true) @map("is_active")
+
+  icd10Mappings Icd10SnomedMap[]
+
+  @@index([code])
+  @@index([semanticTag])
+  @@map("snomed_codes")
+}
+
+/// ICD-10 ↔ SNOMED CT cross-mapping
+model Icd10SnomedMap {
+  id       String @id @default(uuid()) @db.Uuid
+  icd10Id  String @map("icd10_id") @db.Uuid
+  snomedId String @map("snomed_id") @db.Uuid
+  mapType  String @default("equivalent") @map("map_type") // equivalent, narrower, broader, related
+
+  icd10  Icd10Code  @relation(fields: [icd10Id], references: [id], onDelete: Cascade)
+  snomed SnomedCode @relation(fields: [snomedId], references: [id], onDelete: Cascade)
+
+  @@unique([icd10Id, snomedId])
+  @@index([icd10Id])
+  @@index([snomedId])
+  @@map("icd10_snomed_maps")
+}
+
+/// SNOMED CT ICD-10 Extended Map category values (children of 447634004)
+enum MapCategory {
+  PROPERLY_CLASSIFIED // 447637006 — Map source concept is properly classified
+  CANNOT_BE_CLASSIFIED // 447638001 — Map source concept cannot be classified with available data
+  CONTEXT_DEPENDENT // 447639009 — Map of source concept is context dependent
+  SOURCE_CONCEPT_AMBIGUOUS // 447640006 — Source SNOMED concept is ambiguous
+  OUTSIDE_SCOPE // 447636002 — Map source concept is outside scope of target classification
+}
+
+/// Raw SNOMED CT to ICD-10 Extended Map records (Refset 447562003)
+model IcdSnomedMapping {
+  id                String       @id @map("member_id") // SNOMED memberId
+  isActive          Boolean      @default(true) @map("is_active")
+  moduleId          String?      @map("module_id")
+  effectiveTime     String?      @map("effective_time")
+  snomedCode        String       @map("snomed_code")
+  snomedConceptName String?      @map("snomed_concept_name")
+  icd10Code         String?      @map("icd10_code")
+  icd10ConceptName  String?      @map("icd10_concept_name")
+  mapGroup          Int          @map("map_group")
+  mapPriority       Int          @map("map_priority")
+  mapRule           String?      @map("map_rule") @db.Text
+  mapAdvice         String?      @map("map_advice") @db.Text
+  mapCategoryId     String?      @map("map_category_id")
+  mapCategory       MapCategory? @map("map_category")
+  correlationId     String?      @map("correlation_id")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+  lastSyncedAt      DateTime     @default(now()) @map("last_synced_at")
+
+  @@index([snomedCode])
+  @@index([icd10Code])
+  @@index([mapCategory])
+  @@index([lastSyncedAt])
+  @@map("icd_snomed_mappings")
+}
+
+/// LOINC observation/lab codes
+model LoincCode {
+  id        String  @id @default(uuid()) @db.Uuid
+  code      String  @unique // e.g., "2345-7"
+  longName  String  @map("long_name") // e.g., "Glucose [Mass/volume] in Serum or Plasma"
+  shortName String? @map("short_name")
+  component String? // e.g., "Glucose"
+  property  String? // e.g., "MCnc"
+  system    String? // e.g., "Ser/Plas"
+  scale     String? // e.g., "Qn"
+  classType String? @map("class_type") // e.g., "CHEM" — lab class
+  isActive  Boolean @default(true) @map("is_active")
+
+  @@index([code])
+  @@index([classType])
+  @@map("loinc_codes")
+}
+
+/// RxNorm medication codes
+model RxnormCode {
+  id       String  @id @default(uuid()) @db.Uuid
+  rxcui    String  @unique // RxNorm Concept Unique Identifier
+  name     String // e.g., "metformin hydrochloride 500 MG Oral Tablet"
+  tty      String? // Term Type — SCD, SBD, GPCK, BPCK, IN, BN, etc.
+  isActive Boolean @default(true) @map("is_active")
+
+  @@index([rxcui])
+  @@index([tty])
+  @@map("rxnorm_codes")
+}
+
+// ─── Workflow ─────────────────────────────────────────────────────────────────
+
+enum WorkflowStatus {
+  DRAFT
+  ACTIVE
+  DISABLED
+}
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model Workflow {
+  id            String         @id @default(uuid()) @db.Uuid
+  applicationId String         @map("application_id") @db.Uuid
+  name          String
+  description   String?
+  nodes         Json           @default("[]")
+  edges         Json           @default("[]")
+  config        Json           @default("{}") // connectionMode, defaultEhrName, variables, etc.
+  triggerType   String         @default("manual") @map("trigger_type")
+  version       Int            @default(1)
+  status        WorkflowStatus @default(DRAFT)
+  isActive      Boolean        @default(true) @map("is_active")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  application Application         @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  executions  WorkflowExecution[]
+
+  @@index([applicationId])
+  @@index([applicationId, isActive])
+  @@map("workflows")
+}
+
+model WorkflowExecution {
+  id           String          @id @default(uuid()) @db.Uuid
+  workflowId   String          @map("workflow_id") @db.Uuid
+  status       ExecutionStatus @default(PENDING)
+  triggerInput Json?           @map("trigger_input")
+  stepResults  Json?           @map("step_results") // array of step results
+  output       Json? // final output
+  error        String?
+  startedAt    DateTime?       @map("started_at")
+  completedAt  DateTime?       @map("completed_at")
+  durationMs   Int?            @map("duration_ms")
+  createdAt    DateTime        @default(now()) @map("created_at")
+
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([status])
+  @@index([workflowId, createdAt])
+  @@map("workflow_executions")
+}
+
+model WorkflowTemplate {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  description String?
+  category    String // e.g. 'clinical', 'data-extraction', 'reporting'
+  nodes       Json     @default("[]")
+  edges       Json     @default("[]")
+  config      Json     @default("{}")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("workflow_templates")
+}
+
+// ─── Workflow Tool Registry ───────────────────────────────────────────────────
+
+model WorkflowTool {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @unique
+  displayName  String   @map("display_name")
+  category     String // 'fhir', 'ai', 'data', 'control', 'communication'
+  description  String?
+  configSchema Json?    @map("config_schema") // JSON Schema for the node config panel
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  appTools AppToolAccess[]
+
+  @@map("workflow_tools")
+}
+
+model AppToolAccess {
+  id            String   @id @default(uuid()) @db.Uuid
+  applicationId String   @map("application_id") @db.Uuid
+  toolId        String   @map("tool_id") @db.Uuid
+  isEnabled     Boolean  @default(true) @map("is_enabled")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  application Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  tool        WorkflowTool @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, toolId])
+  @@index([applicationId])
+  @@map("app_tool_access")
+}
+
+// Note: Refresh tokens and revoked tokens are stored in Redis (not DB).
+// - Revoked tokens: key = "revoked:<jti>", TTL = token expiry
+// - Refresh tokens: key = "refresh:<token>", TTL = refresh token lifetime

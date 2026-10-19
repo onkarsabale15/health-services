@@ -1,0 +1,16 @@
+node_modules
+dist
+.next
+.env
+.env.local
+.env.*.local
+*.log
+.turbo
+coverage
+.DS_Store
+.tsbuildinfo
+!docs/knowledge-base/
+*.zip
+graphify-out
+.superpowers/
+.claude/settings.local.json

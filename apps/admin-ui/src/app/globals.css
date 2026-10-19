@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-surface text-surface-on font-sans antialiased;
+  }
+}
+
+@layer components {
+  /* No-Line Rule: Define structure via surface shifts, not 1px borders */
+  .aegis-card {
+    @apply bg-surface-container-lowest rounded-round-four shadow-ambient transition-shadow hover:shadow-lg overflow-hidden;
+  }
+
+  .aegis-section {
+    @apply bg-surface-container-low rounded-round-four p-6;
+  }
+
+  /* Glassmorphism Rule: Floating headers or context menus */
+  .aegis-glass {
+    @apply bg-surface-variant/70 backdrop-blur-md;
+  }
+
+  /* Signature Gradient: Primary buttons and CTAs */
+  .btn-primary {
+    @apply bg-gradient-to-br from-primary to-primary-dim text-white font-medium px-4 py-2 rounded-round-four transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:scale-100;
+  }
+
+  .btn-secondary {
+    @apply bg-surface-container-highest text-surface-on-variant font-medium px-4 py-2 rounded-round-four hover:bg-surface-container-high transition-colors;
+  }
+
+  /* Editorial Data Tables: Zebra striping, no horizontal lines */
+  .aegis-table {
+    @apply w-full text-sm border-separate border-spacing-0;
+  }
+
+  .aegis-table th {
+    @apply bg-surface-container-low text-secondary font-semibold text-left p-3 first:rounded-l-round-four last:rounded-r-round-four;
+  }
+
+  .aegis-table td {
+    @apply p-3 align-middle;
+  }
+
+  .aegis-table tbody tr:nth-child(even) {
+    @apply bg-surface-container-low/50;
+  }
+
+  .aegis-table tbody tr:hover {
+    @apply bg-surface-container-low;
+  }
+
+  /* Status Badges: Stamped metadata style */
+  .badge {
+    @apply text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1;
+  }
+
+  .badge-production { @apply bg-primary-container text-primary-dim; }
+  .badge-sandbox { @apply bg-tertiary-container text-tertiary; }
+  .badge-active { @apply bg-green-100 text-green-700; }
+  .badge-disabled { @apply bg-red-100 text-red-700; }
+  .badge-pending { @apply bg-yellow-100 text-yellow-700; }
+
+  /* Form Inputs: Tonal background, no line until focus */
+  .aegis-input {
+    @apply w-full bg-surface-container-highest border-0 focus:ring-1 focus:ring-primary rounded-round-four px-3 py-2 text-sm placeholder:text-gray-400 transition-all;
+  }
+}

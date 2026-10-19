@@ -1,0 +1,39 @@
+{
+  "name": "@hs/bridge-client",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./fhir": {
+      "types": "./dist/fhir/index.d.ts",
+      "default": "./dist/fhir/index.js"
+    },
+    "./openapi.json": "./openapi.json"
+  },
+  "scripts": {
+    "generate-spec": "node scripts/generate-spec.js",
+    "generate-types": "openapi-typescript openapi.json -o src/generated/api-types.ts",
+    "build": "npm run generate-spec && npm run generate-types && tsc",
+    "clean": "rm -rf dist",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "dependencies": {
+    "@hs/infra": "*"
+  },
+  "devDependencies": {
+    "@hs/bridge-api": "*",
+    "@nestjs/common": "^11.1.17",
+    "@nestjs/core": "^11.1.17",
+    "@nestjs/platform-express": "^11.1.17",
+    "@nestjs/swagger": "^11.2.6",
+    "openapi-typescript": "7.6.1",
+    "reflect-metadata": "^0.2.2",
+    "typescript": "^5.7.0"
+  }
+}

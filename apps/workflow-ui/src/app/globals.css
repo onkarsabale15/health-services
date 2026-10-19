@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-50 text-gray-900;
+}
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.2s ease-out;
+}
+
+/* ─── React Flow — Tailwind-based theming ─────────────────────────── */
+
+/* Canvas viewport */
+.react-flow {
+  @apply bg-gray-50;
+}
+
+/* Nodes — base wrapper (custom nodes provide their own inner styling) */
+.react-flow__node {
+  @apply text-xs cursor-pointer;
+}
+
+.react-flow__node.selected > div {
+  @apply ring-2 ring-blue-400 ring-offset-1;
+}
+
+/* Handles (connection points) */
+.react-flow__handle {
+  @apply w-3 h-3 rounded-full border-2 border-white transition-all;
+}
+
+.react-flow__handle:hover {
+  @apply ring-2 ring-blue-300;
+}
+
+.react-flow__handle-connecting {
+  @apply ring-2 ring-blue-400;
+}
+
+/* Edges (connection lines) */
+.react-flow__edge-path {
+  @apply stroke-slate-400;
+  stroke-width: 2;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  @apply stroke-blue-500;
+  stroke-width: 2.5;
+}
+
+.react-flow__edge:hover .react-flow__edge-path {
+  @apply stroke-slate-500;
+}
+
+/* Connection line (while dragging a new connection) */
+.react-flow__connection-path {
+  @apply stroke-blue-500;
+  stroke-width: 2;
+  stroke-dasharray: 6 3;
+}
+
+/* Selection rectangle */
+.react-flow__selection {
+  @apply bg-blue-50/40 border border-blue-300 rounded;
+}
+
+/* Background dots/pattern */
+.react-flow__background {
+  @apply bg-gray-50;
+}
+
+/* Controls (zoom in/out/fit buttons) */
+.react-flow__controls {
+  @apply bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden;
+}
+
+.react-flow__controls-button {
+  @apply w-7 h-7 flex items-center justify-center bg-white border-b border-gray-100
+         text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors;
+}
+
+.react-flow__controls-button:last-child {
+  @apply border-b-0;
+}
+
+.react-flow__controls-button svg {
+  @apply w-3.5 h-3.5 fill-current;
+}
+
+/* MiniMap */
+.react-flow__minimap {
+  @apply bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden;
+}
+
+.react-flow__minimap-mask {
+  fill: rgba(243, 244, 246, 0.7);
+}
+
+/* Attribution (hidden via proOptions) */
+.react-flow__attribution {
+  @apply hidden;
+}
+
+/* Pane (right-click context or empty state) */
+.react-flow__pane {
+  @apply cursor-grab;
+}
+
+.react-flow__pane.dragging {
+  @apply cursor-grabbing;
+}
